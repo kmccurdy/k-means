@@ -1,0 +1,77 @@
+body {
+  font: 300 12px "Helvetica Neue", Helvetica;
+}
+
+p {
+  float: right;
+  width: 180px;
+  padding-right: 10px;
+}
+
+h1 {
+  padding-left: 60px;
+  padding-bottom: 10px;
+}
+
+form {
+  float: left;
+  padding-left: 20px;
+}
+
+button {
+  float: left;
+  margin-left: 20px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  clear: left;
+}
+
+#map {
+  padding-left: 40px;
+}
+
+#graph {
+  padding-left: 40px;
+}
+
+#wrap {
+  width: 200px;
+  position: absolute;
+  right: 200px;
+  top: 80px;
+  float: right;
+  align: right;
+}
+
+#states path {
+  fill: #EEE9E9;
+  stroke: #fff;
+  stroke-width: 1px;
+}
+
+#arrest-locations circle {
+  fill: lightsteelblue;
+  fill-opacity: .7;
+  stroke: #EE6363;
+  stroke-width: .8;
+}
+
+
+.rule line {
+  stroke: #eee;
+  shape-rendering: crispEdges;
+}
+
+.rule line.axis {
+  stroke: #000;
+}
+
+.line {
+  fill: none;
+  stroke: lightsteelblue;
+  stroke-width: 1.8px;
+}
+
+circle.line {
+  fill: #fff;
+}
