@@ -1,6 +1,3 @@
-var local = false;
-var statesJSON = local? "us-states.json" : "https://raw.github.com/kmccurdy/k-means/scripts/projects/occupy_arrests/us-states.json";
-var arrestsCSV = local? "occupyarrests.csv" : "https://raw.github.com/kmccurdy/k-means/scripts/projects/occupy_arrests/occupyarrests.csv";
 
 // The radius scale for the centroids.
 var r = d3.scale.sqrt()
@@ -21,7 +18,7 @@ var svg = d3.select("#map").append("svg")
 svg.append("g").attr("id", "states");
 svg.append("g").attr("id", "arrest-locations");
 
-d3.json(statesJSON, function(collection) {
+d3.json("us-states.json", function(collection) {
   svg.select("#states")
     .selectAll("path")
       .data(collection.features)
@@ -43,7 +40,7 @@ var vis = d3.select("#graph")
   .append("g")
 	.attr("transform", "translate(" + svgM + "," + svgP + ")");
 
-d3.csv(arrestsCSV, function(csv){
+d3.csv("occupyArrests.csv", function(csv){
 
 ///////////////////////////////
 // map
