@@ -1,6 +1,6 @@
 var local = false;
-var statesJSON = local ? "us-states.json" : "https://raw.github.com/kmccurdy/k-means/scripts/projects/occupy_arrests/us-states.json";
-var arrestsCSV = local ? "occupyarrests.csv" : "https://raw.github.com/kmccurdy/k-means/scripts/projects/occupy_arrests/occupyarrests.csv";
+var statesJSON = local ? "us-states.json" : "http://www.k-means.net/uploads/6/9/2/3/6923199/us-states.json"; //"https://raw.github.com/kmccurdy/k-means/scripts/projects/occupy_arrests/us-states.json";
+var arrestsCSV = local ? "occupyarrests.csv" : "http://www.k-means.net/uploads/6/9/2/3/6923199/occupyarrests.csv"; //"https://raw.github.com/kmccurdy/k-means/scripts/projects/occupy_arrests/occupyarrests.csv";
 
 
 // The radius scale for the centroids.
