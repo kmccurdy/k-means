@@ -22,6 +22,7 @@ var svg = d3.select("#map").append("svg")
 svg.append("g").attr("id", "states");
 svg.append("g").attr("id", "arrest-locations");
 
+
 d3.json(statesJSON, function(collection) {
   svg.select("#states")
     .selectAll("path")
@@ -36,6 +37,8 @@ var format = d3.time.format("%m/%d/%Y");
 var occupyStart = format.parse("09/17/2011");
 var currentDate = new Date();
 
+var pause = false, pausepoint, currentView = "T";
+
 // graph setup
 var vis = d3.select("#graph")
   .append("svg")
@@ -43,6 +46,7 @@ var vis = d3.select("#graph")
     .attr("height", svgH/5 + svgP * 2)
   .append("g")
 	.attr("transform", "translate(" + svgM + "," + svgP + ")");
+
 
 d3.csv(arrestsCSV, function(csv){
 
@@ -84,8 +88,6 @@ d3.csv(arrestsCSV, function(csv){
     var maxval = d3.max(totalCounts, function(d) {return d.values; }) + p;
     var x = d3.time.scale().domain([ occupyStart, currentDate ]).range([0, w]);
     var y = d3.scale.linear().domain([0, maxval]).range([h, 0]);
-
-
 
     vis.data([totalCounts]);
 
@@ -146,13 +148,14 @@ d3.csv(arrestsCSV, function(csv){
     //// play button - initial state set to totalCounts data
     //// hide button + view change form while animation plays
 
-    d3.select("#run").on("click", function () { return play(totalCounts, "T"); });
+    d3.select("#run").on("click", function () { return play(totalCounts, currentView); });
 
     function play(data, view) {
 	svg.select("#arrest-locations").selectAll("circle").attr("r", 0);
 	vis.selectAll("circle.line").remove();
-	$("form").css({"visibility":"hidden"});
-	$("button").css({"visibility":"hidden"});
+	d3.selectAll("form#view input").property("disabled","disabled");
+	d3.select("button#run").text("Pause").on("click",function(){
+	    return pause_play(data, view);});
 	line_sweep(data, 0, view);
     }
 
@@ -160,18 +163,20 @@ d3.csv(arrestsCSV, function(csv){
     // circles initally invisible, default to all visible on data view switch
 
     d3.select("input[id=view-daily]").on("change", function() { 
+	currentView = "T";
 	svg.select("#arrest-locations").selectAll("circle").attr("r", function(d) { return r(d.count); });
 	vis.selectAll("line.timeline").style("stroke","none");
 	view_switch(totalCounts);
 	vis.selectAll("circle.line").on("click", timeData); 
-	d3.select("#run").on("click", function () { return play(totalCounts, "T"); });
+	d3.select("#run").on("click", function () { return play(totalCounts, currentView); });
     });
     d3.select("input[id=view-cum]").on("change", function() {
+	currentView = "C";
 	svg.select("#arrest-locations").selectAll("circle").attr("r", function(d) { return r(d.count); });
 	vis.selectAll("line.timeline").style("stroke","none");
 	view_switch(cumCounts);
 	vis.selectAll("circle.line").on("click", cumulData);
-	d3.select("#run").on("click", function () { return play(cumCounts, "C"); });
+	d3.select("#run").on("click", function () { return play(cumCounts, currentView); });
     });
 
     function view_switch(newData) {
@@ -235,17 +240,7 @@ d3.csv(arrestsCSV, function(csv){
 
     function line_sweep(dateData, i, view) {
 
-	if (i == (dateData.length - 1)) { draw_circles(dateData);
-				    vis.selectAll("line.timeline").style("stroke","none");
-					  $("form").css({"visibility":"visible"});
-					  $("button").css({"visibility":"visible"});
-					  if (view == "C") {
-				    vis.selectAll("circle.line").style("stroke", "steelblue")
-					  .on("click", cumulData);
-					  } else {
-				    vis.selectAll("circle.line").style("stroke", "steelblue")
-					  .on("click", timeData);
-					  }
+	if (i == (dateData.length - 1)) { show_all(dateData);
 	} else {
 				 
 	    var d0 = format.parse(dateData[i].key),
@@ -279,6 +274,7 @@ d3.csv(arrestsCSV, function(csv){
 
 
     function line_next(dateData, i, view){
+	if (pause) { pausepoint = i; return; }
 	i++;
 	draw_circles(dateData.slice(0,i));
 	while (i < dateData.length){
@@ -288,23 +284,64 @@ d3.csv(arrestsCSV, function(csv){
 	}
     }
 
-    function draw_circles(dateData) {
+    function draw_circles(dateData, all) {
+
+	all = (typeof(all) == "undefined") ? false : true ;
 
 	vis.selectAll("circle.line").style("stroke", "steelblue"); // pre-existing circles become blue                    
-        vis.append("circle")
-	       .data(dateData.slice(dateData.length-1,dateData.length)) // last circle is red
-		.attr("class", "line")
+        var Circles = all ? 
+	    vis.selectAll("circle.line")
+	    .data(dateData)
+	    .enter().append("circle") :
+	    vis.append("circle")
+	    .data(dateData.slice(dateData.length-1,dateData.length)) // last circle is red
+	    .style("stroke", "#EE6363");
+
+	    Circles.attr("class", "line")
 	        .attr("id", function(d) { return d.key; })
 	    .attr("cx", function(d) { return x(format.parse(d.key)); })
 		.attr("cy", function(d) { return y(d.values); })	    
 		.attr("r", 2)
-	    .style("stroke", "#EE6363")
 		.on("mouseover", function() { d3.select(this).style("stroke", "#EE6363") })
 		.on("mouseout", function() { d3.select(this).style("stroke", "steelblue") })
 		.append("title")
 		.text(function(d) { return d.key + ": " + d.values; });
+    }  
 
-    };   
+    function pause_play(data, view) {
+	pause = true;
+	vis.selectAll("circle.line").on("click", currentView=="C" ? 
+					cumulData : timeData);
+	d3.select("button#stop-play").style("visibility","")
+	    .on("click",function(){
+		pause = false;
+		d3.select("button#stop-play").style("visibility","hidden");
+		show_all(data);
+	    });
+	d3.select("button#run").text("Resume")
+	    .on("click",function(){
+		pause = false;
+		d3.select("button#stop-play").style("visibility","hidden");
+		vis.selectAll("circle.line").on("click", "");
+		line_sweep(data, pausepoint, view);
+		d3.select("button#run").text("Pause").on("click",function(){
+		    return pause_play(data, view);});
+	    });
+    }
+
+    function show_all(dateData) {
+	draw_circles(dateData, true);
+	vis.selectAll("line.timeline").style("stroke","none");
+	d3.selectAll("form#view input").property("disabled","");
+	d3.select("#run").text("Play").on("click",function(){
+	    return play(currentView == "C" ? cumCounts : totalCounts, currentView) ; })
+	vis.selectAll("circle.line").style("stroke", "steelblue")
+	    .on("click", currentView == "C" ? cumulData : timeData);
+	svg.selectAll("#arrest-locations circle")
+	    .attr("r", currentView=="T" ? 0 :
+		  function(d) { return r(d.count); });
+	
+    }
 
 ///////////////////////////////
 // interactive data selection
