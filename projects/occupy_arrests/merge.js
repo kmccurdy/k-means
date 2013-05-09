@@ -39,7 +39,6 @@ var currentDate = new Date();
 
 var pause = false, pausepoint, currentView = "T";
 
-======= end
 // graph setup
 var vis = d3.select("#graph")
   .append("svg")
